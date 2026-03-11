@@ -58,8 +58,40 @@ def is_ordered_block(w3, block_num):
 	block = w3.eth.get_block(block_num, full_transactions=True)
 	ordered = False
 
-	# TODO YOUR CODE HERE
+def is_ordered_block(w3, block_num):
+	"""
+	Takes a block number
+	Returns a boolean that tells whether all the transactions in the block are ordered by priority fee
 
+	Before EIP-1559, a block is ordered if and only if all transactions are sorted in decreasing order of the gasPrice field
+
+	After EIP-1559, there are two types of transactions
+		*Type 0* The priority fee is tx.gasPrice - block.baseFeePerGas
+		*Type 2* The priority fee is min( tx.maxPriorityFeePerGas, tx.maxFeePerGas - block.baseFeePerGas )
+
+	Conveniently, most type 2 transactions set the gasPrice field to be min( tx.maxPriorityFeePerGas + block.baseFeePerGas, tx.maxFeePerGas )
+	"""
+	block = w3.eth.get_block(block_num, full_transactions=True)
+	base_fee = block.get('baseFeePerGas')
+	ordered = False
+	for tx in block.transactions:
+		if base_fee is None:
+			priority_fee = tx.get('gasPrice', 0)
+		else:
+			tx_type = tx.get('type', 0)
+
+			if tx_type == 2:
+				priority_fee = min(
+					tx.get('maxPriorityFeePerGas', 0),
+					tx.get('maxFeePerGas', 0) - base_fee
+				)
+			else:
+				priority_fee = tx.get('gasPrice', 0) - base_fee
+		if priority_fee > prev_priority_fee:
+			ordered = False
+			return ordered
+		prev_priority_fee = priority_fee
+	ordered = True
 	return ordered
 
 
