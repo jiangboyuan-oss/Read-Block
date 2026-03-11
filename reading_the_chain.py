@@ -74,6 +74,7 @@ def is_ordered_block(w3, block_num):
 	block = w3.eth.get_block(block_num, full_transactions=True)
 	base_fee = block.get('baseFeePerGas')
 	ordered = False
+	prev_priority_fee = 0
 	for tx in block.transactions:
 		if base_fee is None:
 			priority_fee = tx.get('gasPrice', 0)
